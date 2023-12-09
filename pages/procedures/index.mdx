@@ -1,0 +1,116 @@
+# API Користувачів
+
+> ВАЖЛИВО: tRPC процедури реалізовані за лопомогою бібліотеки **Tanstack React Query**, тому вони мають відповідні ХУКИ, які можна знайти у документації [тут](https://react-query.tanstack.com/reference/useQuery)
+
+> ВАЖЛИВО: Для tRPC процедур використовується бібліотека **Zod** для валідації вхідних даних, тому вони мають відповідні схеми, які можна знайти у документації [тут](https://zod.dev/)
+
+tRPC процедури користувачів розташовані у проекті за шляхом:
+`src/server/api/routers/users.ts`
+
+## Отримання списку користувачів
+
+### Вхідні дані
+
+```ts
+// Треба тільки для пагінованих запитів
+const paginatedQuerySchema = z.object({
+  // Відпрвідає за кількість записів, які будуть повернені
+  limit: z.number().min(1).max(100).nullish(),
+  // Відповідає за курсор, який вказує на
+  // позицію в списку, з якої буде почато вибірку
+  cursor: z.string().nullish(),
+  // Відповідає за кількість записів, які будуть пропущені
+  skip: z.number().optional(),
+});
+
+const getAllUsersQuerySchema = z
+  .object({
+    search: z.string().optional(),
+    roles: z.array(z.nativeEnum(Role)).optional(),
+  })
+  .merge(paginatedQuerySchema);
+```
+
+### Вихідні дані
+
+```ts
+type GetAllUsersResponse =
+  | {
+      total: number;
+      users: {
+        name: string | null;
+        id: string;
+        email: string | null;
+        image: string | null;
+        role: Role;
+      }[];
+      nextCursor: string | undefined;
+    }
+  | undefined;
+```
+
+### Приклади
+
+#### Без пагінації
+
+```ts
+const { data } = api.users.getAllUsers.useQuery(
+  {
+    search: debouncesAuthorSearchValue,
+  },
+  {
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+  }
+);
+```
+
+#### З пагінацією
+
+```ts
+const { data, isLoading, isRefetching } =
+  api.users.getAllUsers.useInfiniteQuery(
+    {
+      search: debouncedSearchValue.trim(),
+      roles: selectedFilterRoles,
+      limit: USERS_LIMIT,
+      skip: (page - 1) * USERS_LIMIT,
+    },
+    {
+      getNextPageParam: (lastPage) => {
+        return lastPage.nextCursor;
+      },
+      enabled:
+        !!debouncedSearchValue.length && debouncedSearchValue.trim().length > 2,
+      keepPreviousData: true,
+      refetchOnWindowFocus: false,
+    }
+  );
+```
+
+## Зміна ролі користувача
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів з роллю **ADMIN**
+
+### Вхідні дані
+
+```ts
+const updateUserRoleInputSchema = z.object({
+  id: z.string(),
+  role: z.nativeEnum(Role),
+});
+```
+
+### Вихідні дані
+
+```ts
+type UpdateUserRoleResponse = User;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.users.updateUserRole.useMutation({
+  async onSuccess(updatedUser) {},
+});
+```

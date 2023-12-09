@@ -1,0 +1,189 @@
+# API Працівників
+
+> ВАЖЛИВО: tRPC процедури реалізовані за лопомогою бібліотеки **Tanstack React Query**, тому вони мають відповідні ХУКИ, які можна знайти у документації [тут](https://react-query.tanstack.com/reference/useQuery)
+
+> ВАЖЛИВО: Для tRPC процедур використовується бібліотека **Zod** для валідації вхідних даних, тому вони мають відповідні схеми, які можна знайти у документації [тут](https://zod.dev/)
+
+tRPC процедури працівників розташовані у проекті за шляхом:
+`src/server/api/routers/employees.ts`
+
+## Список працівників
+
+### Вхідні дані
+
+```ts
+const getAllEmployeesQuerySchema = z.object({
+  search: z.string().optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type GetAllEmployeesResponse = {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  url: string | null;
+  academicStatus: $Enums.AcademicStatus | null;
+  disciplines: {
+    id: string;
+    abbreviation: string;
+    name: string;
+    description: string;
+    credits: number;
+    courses: string;
+  }[];
+}[];
+```
+
+### Приклад
+
+```ts
+const { data, isLoading, isRefetching } =
+  api.employees.getAllEmployees.useQuery({
+    search: debouncedSearchValue.trim(),
+  });
+```
+
+## Дані про певного працівника
+
+### Вхідні дані
+
+```ts
+const getEmployeesItemQuerySchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type GetEmployeesItemResponse = Employee;
+```
+
+### Приклад
+
+```ts
+const { data } = api.employees.getEmployeesItem.useQuery({
+  id: employeeId,
+});
+```
+
+## Створення працівника
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів з роллю **Адміністратор**
+
+### Вхідні дані
+
+```ts
+const createEmployeeSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  image: z.string().optional(),
+  url: z.string().optional(),
+  academicStatus: z.nativeEnum(AcademicStatus),
+  disciplines: z.array(z.string()).optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type CreateEmployeeResponse = Employee;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.employees.createEmployee.useMutation({
+  async onSuccess(createdEmployee) {},
+});
+```
+
+## Редагування працівника
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів з роллю **Адміністратор**
+
+### Вхідні дані
+
+```ts
+const updateEmployeeSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  image: z.string().optional(),
+  url: z.string().optional(),
+  academicStatus: z.nativeEnum(AcademicStatus),
+  disciplines: z.array(z.string()).optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type UpdateEmployeeResponse = Employee;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.employees.updateEmployee.useMutation({
+  async onSuccess(updatedEmployee) {},
+});
+```
+
+## Видалення працівника
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів з роллю **Адміністратор**
+
+### Вхідні дані
+
+```ts
+const removeEmployeeSchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type RemoveEmployeeResponse = Employee;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.employees.removeEmployee.useMutation({
+  async onSuccess(removedEmployee) {},
+});
+```
+
+## Видалення декількох працівників
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів з роллю **Адміністратор**
+
+### Вхідні дані
+
+```ts
+const butchRemoveEmployeesSchema = z.object({
+  ids: z.array(z.string()),
+});
+```
+
+### Вихідні дані
+
+```ts
+// Кількість видалених працівників
+type ButchRemoveEmployeesResponse = number;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } =
+  api.employees.butchRemoveEmployees.useMutation({
+    async onSuccess(removedEmployeesAmount) {},
+  });
+```

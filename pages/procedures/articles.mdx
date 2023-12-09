@@ -1,0 +1,256 @@
+# API Статтей
+
+> ВАЖЛИВО: tRPC процедури реалізовані за лопомогою бібліотеки **Tanstack React Query**, тому вони мають відповідні ХУКИ, які можна знайти у документації [тут](https://react-query.tanstack.com/reference/useQuery)
+
+> ВАЖЛИВО: Для tRPC процедур використовується бібліотека **Zod** для валідації вхідних даних, тому вони мають відповідні схеми, які можна знайти у документації [тут](https://zod.dev/)
+
+tRPC процедури статтей розташовані у проекті за шляхом:
+`src/server/api/routers/subjects.ts`
+
+## Статистика статей
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів
+
+### Вхідні дані
+
+Немає
+
+### Вихідні дані
+
+```ts
+type ArticlesStatisticsResponse = {
+  totalArticles: number;
+  myArticles: number;
+};
+```
+
+### Приклад
+
+```ts
+const { data, isLoading } = api.articles.getStatistics.useQuery();
+```
+
+## Назва статті по ідентифікатору
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів
+
+### Вхідні дані
+
+```ts
+const getArticleNameQuerySchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type ArticleNameResponse = string;
+```
+
+### Приклад
+
+```ts
+const { data } = api.articles.getArticleName.useQuery(
+  {
+    id,
+  },
+  {
+    enabled: !!id,
+    retry: false,
+  }
+);
+```
+
+## Дані про статтю
+
+> ВАЖЛИВО!: Ця процедура використовується на стороні серверу для повернення вмісту статті розміткою з сервера, і для покращення СЕО
+
+### Вхідні дані
+
+```ts
+const getArticleItemQuerySchema = z.object({
+  slug: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type ArticleItemResponse = {
+  id: string;
+  slug: string;
+  author: {
+    name: string | null;
+    image: string | null;
+  };
+  tags: {
+    id: string;
+    name: string;
+    newsSectionId: string | null;
+  }[];
+  title: string;
+  content: string;
+  posterUrl: string;
+} | null;
+```
+
+### Приклад
+
+```ts
+export const getServerSideProps: GetServerSideProps<{
+  article: ArticleItem;
+}> = async (ctx) => {
+  const trpc = appRouter.createCaller(ctx as never);
+  const slug = ctx.params?.slug;
+
+  const article = await trpc.articles.getArticleItem({
+    slug: slug as string,
+  });
+};
+```
+
+## Список статей
+
+### Вхідні дані
+
+```ts
+export const paginatedQuerySchema = z.object({
+  limit: z.number().min(1).max(100).nullish(),
+  cursor: z.string().nullish(),
+  skip: z.number().optional(),
+});
+
+const getAllArticlesQuerySchema = z
+  .object({
+    search: z.string().optional(),
+    author: z.string().optional(),
+    authors: z.array(z.string()).optional(),
+    tags: z.array(z.string()).optional(),
+  })
+  .merge(paginatedQuerySchema);
+```
+
+### Вихідні дані
+
+```ts
+type GetAllArticlesResponse = {
+  total: number;
+  articles: {
+    id: string;
+    slug: string;
+    author: {
+      name: string | null;
+      id: string;
+      image: string | null;
+      role: $Enums.Role;
+    };
+    tags: {
+      id: string;
+      name: string;
+      newsSectionId: string | null;
+    }[];
+    title: string;
+    posterUrl: string;
+    createdAt: Date;
+  }[];
+  nextCursor: string | undefined;
+};
+```
+
+### Приклади
+
+#### З фільтрацією по ОДНОМУ автору
+
+```ts
+const { data, isLoading, isRefetching } =
+  api.articles.getAllArticles.useInfiniteQuery(
+    {
+      search: debouncedSearchValue.trim(),
+      limit: ARTICLES_LIMIT,
+      skip: (page - 1) * ARTICLES_LIMIT,
+      author: permissions.canViewOnlyOwnArticles ? user?.id : undefined,
+      tags: selectedFilterTagsIds,
+    },
+    {
+      getNextPageParam: (lastPage) => {
+        return lastPage.nextCursor;
+      },
+      keepPreviousData: true,
+      refetchOnWindowFocus: false,
+    }
+  );
+```
+
+#### З фільтрацією по КІЛЬКОМ авторам
+
+```ts
+const { data, isLoading } = api.articles.getAllArticles.useInfiniteQuery(
+  {
+    search: debouncedSearchValue,
+    limit: ARTICLES_LIMIT,
+    skip: (page - 1) * ARTICLES_LIMIT,
+    tags: tagsIdsArray,
+    authors: authorsIdsArray,
+  },
+  {
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+  }
+);
+```
+
+## Створення статті
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів
+
+### Вхідні дані
+
+```ts
+const createArticleQuerySchema = z.object({
+  title: z.string(),
+  content: z.string(),
+  tags: z.array(z.string()),
+  posterUrl: z.string().optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type CreateArticleResponse = Article;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.articles.createArticle.useMutation({
+  async onSuccess(createdArticle) {},
+});
+```
+
+## Видалення статті
+
+> ПРИМІТКА: Ця проуедура доступна тільки для авторизованих користувачів
+
+### Вхідні дані
+
+```ts
+const removeArticleQuerySchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type RemoverticleResponse = Article;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.articles.removeArticle.useMutation({
+  async onSuccess(removedArticle) {},
+});
+```

@@ -23,6 +23,10 @@ const config: DocsThemeConfig = {
     </svg>
   ),
   darkMode: false,
+  nextThemes: {
+    defaultTheme: "light",
+    forcedTheme: "light",
+  },
   project: {
     link: "https://github.com/mykola-kolomoyets/itvs-v2",
   },

@@ -1,0 +1,176 @@
+# API Дисиплін
+
+> ВАЖЛИВО: tRPC процедури реалізовані за лопомогою бібліотеки **Tanstack React Query**, тому вони мають відповідні ХУКИ, які можна знайти у документації [тут](https://react-query.tanstack.com/reference/useQuery)
+
+> ВАЖЛИВО: Для tRPC процедур використовується бібліотека **Zod** для валідації вхідних даних, тому вони мають відповідні схеми, які можна знайти у документації [тут](https://zod.dev/)
+
+tRPC процедури дисциплін розташовані у проекті за шляхом:
+`src/server/api/routers/employees.ts`
+
+## Список дисциплін
+
+### Вхідні дані
+
+```ts
+const getAllSubjectsQuerySchema = z.object({
+  search: z.string().optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type GetAllSubjectsResponse = {
+  id: string;
+  abbreviation: string;
+  name: string;
+  description: string;
+  credits: number;
+  courses: string;
+}[];
+```
+
+### Приклад
+
+```ts
+const { data, isLoading, isRefetching } = api.subjects.getAllSubjects.useQuery(
+  {
+    search: debouncedDisciplineSearchValue.trim(),
+  },
+  {
+    keepPreviousData: true,
+  }
+);
+```
+
+## Дані про певну дисципліну
+
+### Вхідні дані
+
+```ts
+const getSubjectItemQuerySchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type GetSubjectItemResponse = Discipline;
+```
+
+### Приклад
+
+```ts
+const { data } = api.subjects.getSubjectItem.useQuery({
+  id,
+});
+```
+
+## Створення дисципліни
+
+### Вхідні дані
+
+```ts
+const createSubjectSchema = z.object({
+  name: z.string(),
+  abbreviation: z.string(),
+  description: z.string(),
+  credits: z.number(),
+  courses: z.array(z.string()),
+});
+```
+
+### Вихідні дані
+
+```ts
+type CreateSubjectResponse = Discipline;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.subjects.createSubject.useMutation({
+  async onSuccess(createdSubject) {},
+});
+```
+
+## Редагування дисципліни
+
+### Вхідні дані
+
+```ts
+const updateSubjectSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  abbreviation: z.string().optional(),
+  description: z.string().optional(),
+  credits: z.number().optional(),
+  courses: z.array(z.string()).optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type UpdateSubjectResponse = Discipline;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.subjects.updateSubject.useMutation({
+  async onSuccess(updatedSubject) {},
+});
+```
+
+## Видалення дисципліни
+
+### Вхідні дані
+
+```ts
+const removeSubjectSchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type RemoveSubjectResponse = Discipline;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.subjects.removeSubject.useMutation({
+  async onSuccess(removedSubject) {},
+});
+```
+
+## Видалення декількох дисциплін
+
+### Вхідні дані
+
+```ts
+const butchRemoveSubjectsSchema = z.object({
+  ids: z.array(z.string()),
+});
+```
+
+### Вихідні дані
+
+```ts
+// Кількість видалених дисциплін
+type ButchRemoveSubjectsResponse = number;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.subjects.butchRemoveSubjects.useMutation(
+  {
+    async onSuccess(removedTagsAmount) {},
+  }
+);
+```

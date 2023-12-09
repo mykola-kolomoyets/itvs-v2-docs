@@ -1,6 +1,7 @@
 {
   "index": "Запуск проекту",
   "database": "База даних",
+  "procedures": "API",
   "about": {
     "title": "Про проект",
     "type": "page"

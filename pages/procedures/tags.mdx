@@ -1,0 +1,154 @@
+# API Дисиплін
+
+> ВАЖЛИВО: tRPC процедури реалізовані за лопомогою бібліотеки **Tanstack React Query**, тому вони мають відповідні ХУКИ, які можна знайти у документації [тут](https://react-query.tanstack.com/reference/useQuery)
+
+> ВАЖЛИВО: Для tRPC процедур використовується бібліотека **Zod** для валідації вхідних даних, тому вони мають відповідні схеми, які можна знайти у документації [тут](https://zod.dev/)
+
+tRPC процедури дисциплін розташовані у проекті за шляхом:
+`src/server/api/routers/tags.ts`
+
+## Список тегів
+
+### Вхідні дані
+
+```ts
+const getAllTagsQuerySchema = z.object({
+  search: z.string().optional(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type GetAllTagsResponse = Tag[];
+```
+
+### Приклад
+
+```ts
+const { data } = api.tags.getAllTags.useQuery({
+  search: "",
+});
+```
+
+## Дані про певний тег
+
+### Вхідні дані
+
+```ts
+const getTagItemQuerySchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type GetTagItemResponse = Tag;
+```
+
+### Приклад
+
+```ts
+const { data } = api.tags.getTagItem.useQuery({
+  id,
+});
+```
+
+## Створення тегу
+
+### Вхідні дані
+
+```ts
+const createTagSchema = z.object({
+  name: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type CreateTagResponse = Tag;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.tags.createTag.useMutation({
+  async onSuccess(createdTag) {},
+});
+```
+
+## Редагування тегу
+
+### Вхідні дані
+
+```ts
+const updateTagSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type UpdateTagResponse = Tag;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.tags.updateTag.useMutation({
+  async onSuccess(updatedTag) {},
+});
+```
+
+## Видалення тегу
+
+### Вхідні дані
+
+```ts
+const deleteTagSchema = z.object({
+  id: z.string(),
+});
+```
+
+### Вихідні дані
+
+```ts
+type DeleteTagResponse = Tag;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.tags.removeTag.useMutation({
+  async onSuccess(removedTag) {},
+});
+```
+
+## Видалення декількох тегів
+
+### Вхідні дані
+
+```ts
+const butchRemoveTagsSchema = z.object({
+  ids: z.array(z.string()),
+});
+```
+
+### Вихідні дані
+
+```ts
+// Кількість видалених тегів
+type ButchRemoveTagsResponse = number;
+```
+
+### Приклад
+
+```ts
+const { mutateAsync, isLoading } = api.tags.butchRemoveTags.useMutation({
+  async onSuccess(removedTagsAmount) {},
+});
+```
